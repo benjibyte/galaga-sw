@@ -1,0 +1,108 @@
+-- Project: Galaga Star Wars
+-- Author: benjibyte
+-- Project start: May 26th, 2026
+-- Project end:
+
+-- Variable Declaration
+local player_x = 125 -- spawn in the center and on the bottom of the screen, with (0,0) in the top left corner
+local player_y = 280
+local player_speed = 2
+lazers = {}
+lazer_speed = 6
+
+-- Game Window Variables
+scale = 3
+scroll_y = 0 -- initial spot to render the background sprite scaled to fit the window
+scroll_power = 3
+window_w, window_h = 240 * scale, 320 * scale
+-- 240, and 320, are the actual pixel art constraints that I have chosen
+love.window.setMode(window_w, window_h, window_flags)
+
+-- The love.load function runs once at bootup
+function love.load()
+	love.window.setTitle("Galaga - Star Wars")
+
+	-- Set scaling filter to nearest
+	love.graphics.setDefaultFilter("nearest", "nearest")
+	-- Load Graphics
+	ship_sprite = love.graphics.newImage("assets/img/galaga-player.png")
+	ship_lazer_sprite = love.graphics.newImage("assets/img/galaga-player-bullet.png")
+	background_sprite = love.graphics.newImage("assets/img/galaga-background.png")
+
+	-- Load Sounds
+	lazer_fire = love.audio.newSource("assets/sound/lazer.ogg", "static")
+
+	-- Print Memory footprint in Kilobytes
+	print("Mem KB: ", collectgarbage("count"))
+	print("jit: ", jit and jit.version or "no jit")
+end
+
+function love.keypressed(key)
+	-- fire lazer
+	if key == "space" then
+		-- Only make lazer if lazers table is empty. Recylcling old lazers
+
+		new_lazer = { x = player_x, y = player_y }
+		table.insert(lazers, new_lazer)
+		lazer_fire:stop()
+		lazer_fire:play()
+		print("Mem KB: ", collectgarbage("count"))
+		
+	end
+end
+
+-- This is the game for drawing images to the screen
+function love.draw()
+	love.graphics.scale(scale, scale)
+
+	love.graphics.draw(background_sprite, 0, scroll_y - (window_h / scale))
+	love.graphics.draw(background_sprite, 0, scroll_y)
+	-- reset scroll
+	if scroll_y > (window_h / scale) then
+		scroll_y = 0
+	end
+
+	-- The Player Ship
+	love.graphics.draw(ship_sprite, player_x, player_y)
+	for index, lazer in ipairs(lazers) do
+		love.graphics.draw(ship_lazer_sprite, lazer.x, lazer.y)
+		if lazer.y < 0 then
+			table.remove(lazers, index)
+		end
+	end
+end
+
+-- This is the game loop for updating values
+function love.update(dt)
+	-- Horizontal movement
+	if love.keyboard.isDown("right") then
+		player_x = player_x + player_speed
+	end
+	if love.keyboard.isDown("left") then
+		player_x = player_x - player_speed
+	end
+
+	-- speed up the background a little just for "game juice"
+	if love.keyboard.isDown("up") then
+		while scroll_power < 5 do
+			scroll_power = scroll_power + (scroll_power / 3)
+		end
+	else
+		while scroll_power > 3 do
+			scroll_power = scroll_power - 0.5
+		end
+	end
+
+	-- lazer fly upwards
+	if #lazers > 0 then
+		for index, lazer in ipairs(lazers) do
+			lazer.y = lazer.y - lazer_speed
+			if lazer.y < 0 then
+				table.remove(lazers, index)
+			end
+		end
+	end
+
+	-- Basic Background Movement
+	scroll_y = scroll_y + scroll_power
+end
