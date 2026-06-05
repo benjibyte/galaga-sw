@@ -7,19 +7,23 @@
 local player_x = 125 -- spawn in the center and on the bottom of the screen, with (0,0) in the top left corner
 local player_y = 280
 local player_speed = 2
-lazers = {}
-lazer_speed = 6
+Lazers = {}
+LazerSpeed = 6
 
 -- Enemies
-enemies = {}
-
+EnemyCount = 10
+Enemies = {}
+enemy_renderX = 48
+enemy_renderY = 100
+EnemySpeed = 1
 -- Game Window Variables
-scale = 3
-scroll_y = 0 -- initial spot to render the background sprite scaled to fit the window
-scroll_power = 3
-window_w, window_h = 240 * scale, 320 * scale
+WindowScale = 3
+ScrollY = 0 -- initial spot to render the background sprite Scaled to fit the window
+ScrollPower = 3
+WindowW, WindowH = 240 * WindowScale, 320 * WindowScale
+TileSize = 16
 -- 240, and 320, are the actual pixel art constraints that I have chosen
-love.window.setMode(window_w, window_h, window_flags)
+love.window.setMode(WindowW, WindowH, window_flags)
 
 -- The love.load function runs once at bootup
 function love.load()
@@ -28,13 +32,16 @@ function love.load()
 	-- Set scaling filter to nearest
 	love.graphics.setDefaultFilter("nearest", "nearest")
 	-- Load Graphics
-	ship_sprite = love.graphics.newImage("assets/img/galaga-player.png")
-	ship_lazer_sprite = love.graphics.newImage("assets/img/galaga-player-bullet.png")
-	background_sprite = love.graphics.newImage("assets/img/galaga-background.png")
-	enemy1_sprite = love.graphics.newImage("assets/img/galaga-enemy1.png")
+	ShipSprite = love.graphics.newImage("assets/img/galaga-player.png")
+	ShipLazerSprite = love.graphics.newImage("assets/img/galaga-player-bullet.png")
+	BackgroundSprite = love.graphics.newImage("assets/img/galaga-background.png")
+	Enemy1Sprite = love.graphics.newImage("assets/img/galaga-enemy1.png")
 
 	-- Load Sounds
-	lazer_fire = love.audio.newSource("assets/sound/lazer.ogg", "static")
+	LazerFireSound = love.audio.newSource("assets/sound/lazer.ogg", "static")
+
+	-- Load enemies
+	new_wave(Enemies, EnemyCount)
 
 	-- Print Memory footprint in Kilobytes
 	print("Mem KB: ", collectgarbage("count"))
@@ -43,53 +50,66 @@ end
 
 -- Enemey waves
 function new_wave(enemy_table, wave_size)
-	for i in
-	new_enemy = { sprite = enemy1_sprite, x = 100, y = 100, hit = false}
-	table.insert(enemies, new_enemy)
+	for i = 0, wave_size do
+		new_enemy = { sprite = Enemy1Sprite, x = enemy_renderX, y = enemy_renderY, hit = false }
+		table.insert(Enemies, new_enemy)
+	end
 	return enemy_table
 end
 
--- Fire lazers (create them and their /variables)
+-- Fire Lazers (create them and their /variables)
 function love.keypressed(key)
 	-- fire lazer
 	if key == "space" then
-		-- Only make lazer if lazers table is empty. Recylcling old lazers
+		-- Only make lazer if Lazers table is empty. Recylcling old Lazers
 
 		new_lazer = { x = player_x, y = player_y }
-		table.insert(lazers, new_lazer)
-		lazer_fire:stop()
-		lazer_fire:play()
+		table.insert(Lazers, new_lazer)
+		LazerFireSound:stop()
+		LazerFireSound:play()
 		print("Mem KB: ", collectgarbage("count"))
 	end
 end
+-- Render enemy
+
+
 
 -- This is the game for drawing images to the screen
 function love.draw()
-	love.graphics.scale(scale, scale)
+	love.graphics.scale(WindowScale, WindowScale)
 
-	love.graphics.draw(background_sprite, 0, scroll_y - (window_h / scale))
-	love.graphics.draw(background_sprite, 0, scroll_y)
+	love.graphics.draw(BackgroundSprite, 0, ScrollY - (WindowH / WindowScale))
+	love.graphics.draw(BackgroundSprite, 0, ScrollY)
 	-- reset scroll
-	if scroll_y > (window_h / scale) then
-		scroll_y = 0
+	if ScrollY > (WindowH / WindowScale) then
+		ScrollY = 0
 	end
 
 	-- The Player Ship
-	love.graphics.draw(ship_sprite, player_x, player_y)
-	for index, lazer in ipairs(lazers) do
-		love.graphics.draw(ship_lazer_sprite, lazer.x, lazer.y)
+	love.graphics.draw(ShipSprite, player_x, player_y)
+	for index, lazer in ipairs(Lazers) do
+		love.graphics.draw(ShipLazerSprite, lazer.x, lazer.y)
 		if lazer.y < 0 then
-			table.remove(lazers, index)
+			table.remove(Lazers, index)
 		end
 	end
-
-	-- Render enemy
-	for index, enemy in ipairs(enemies) do
-		love.graphics.draw(enemy.sprite, enemy.x, enemy.y)
-		if enemy.hit == true then
-			table.remove(enemies, enemy)
+	
+	-- Render Enemies
+	for index, enemy in ipairs(Enemies) do
+		if enemy.hit == false then
+			love.graphics.draw(enemy.sprite, enemy.x, enemy.y)
+		else
+			table.remove(Enemies, index)
 		end
+		
+		--enemy.x = enemy.x + TileSize
+		if enemy == 5 then
+			enemy.y = enemy.y - TileSize
+			enemy.x = enemy.x - (TileSize * enemy)
+		end
+	end
 end
+
 
 -- This is the game loop for updating values
 function love.update(dt)
@@ -103,25 +123,43 @@ function love.update(dt)
 
 	-- speed up the background a little just for "game juice"
 	if love.keyboard.isDown("up") then
-		while scroll_power < 5 do
-			scroll_power = scroll_power + (scroll_power / 3)
+		while ScrollPower < 5 do
+			ScrollPower = ScrollPower + (ScrollPower / 3)
+			EnemySpeed = EnemySpeed - (EnemySpeed / 3)
 		end
 	else
-		while scroll_power > 3 do
-			scroll_power = scroll_power - 0.5
+		while ScrollPower > 3 do
+			ScrollPower = ScrollPower - 0.5
+			EnemySpeed = EnemySpeed + 0.5
 		end
 	end
 
 	-- lazer fly upwards
-	if #lazers > 0 then
-		for index, lazer in ipairs(lazers) do
-			lazer.y = lazer.y - lazer_speed
+	if #Lazers > 0 then
+		for index, lazer in ipairs(Lazers) do
+			lazer.y = lazer.y - LazerSpeed
 			if lazer.y < 0 then
-				table.remove(lazers, index)
+				table.remove(Lazers, index)
+			end
+		end
+	end
+	
+	if #Enemies > 0 then
+		for index, enemy in ipairs(Enemies) do
+			enemy.y = enemy.y + EnemySpeed
+			
+			-- collisions with lazers
+			local enemy_box_y = enemy.y + TileSize
+			local enemy_box_x = enemy.x + TileSize
+			
+			for lazer_index, lazer in ipairs(Lazers) do
+				if (lazer.x > enemy.x and lazer.y > enemy.y) and (lazer.x < enemy_box_x and lazer.y < enemy_box_y) then
+					enemy.hit = true
+				end
 			end
 		end
 	end
 
 	-- Basic Background Movement
-	scroll_y = scroll_y + scroll_power
+	ScrollY = ScrollY + ScrollPower
 end
