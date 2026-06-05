@@ -10,6 +10,9 @@ local player_speed = 2
 lazers = {}
 lazer_speed = 6
 
+-- Enemies
+enemies = {}
+
 -- Game Window Variables
 scale = 3
 scroll_y = 0 -- initial spot to render the background sprite scaled to fit the window
@@ -28,6 +31,7 @@ function love.load()
 	ship_sprite = love.graphics.newImage("assets/img/galaga-player.png")
 	ship_lazer_sprite = love.graphics.newImage("assets/img/galaga-player-bullet.png")
 	background_sprite = love.graphics.newImage("assets/img/galaga-background.png")
+	enemy1_sprite = love.graphics.newImage("assets/img/galaga-enemy1.png")
 
 	-- Load Sounds
 	lazer_fire = love.audio.newSource("assets/sound/lazer.ogg", "static")
@@ -37,6 +41,15 @@ function love.load()
 	print("jit: ", jit and jit.version or "no jit")
 end
 
+-- Enemey waves
+function new_wave(enemy_table, wave_size)
+	for i in
+	new_enemy = { sprite = enemy1_sprite, x = 100, y = 100, hit = false}
+	table.insert(enemies, new_enemy)
+	return enemy_table
+end
+
+-- Fire lazers (create them and their /variables)
 function love.keypressed(key)
 	-- fire lazer
 	if key == "space" then
@@ -69,6 +82,13 @@ function love.draw()
 			table.remove(lazers, index)
 		end
 	end
+
+	-- Render enemy
+	for index, enemy in ipairs(enemies) do
+		love.graphics.draw(enemy.sprite, enemy.x, enemy.y)
+		if enemy.hit == true then
+			table.remove(enemies, enemy)
+		end
 end
 
 -- This is the game loop for updating values
