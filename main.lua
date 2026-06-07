@@ -29,7 +29,7 @@ love.window.setMode(WindowW, WindowH, window_flags)
 function love.load()
 	love.window.setTitle("Galaga - Star Wars")
 
-	-- Set scaling filter to nearest
+	-- Set scaling filter to nearest on both the x and the y
 	love.graphics.setDefaultFilter("nearest", "nearest")
 	-- Load Graphics
 	ShipSprite = love.graphics.newImage("assets/img/galaga-player.png")
