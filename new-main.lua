@@ -5,6 +5,7 @@
 local controls = require("controls")
 local enemies = require("enemies")
 local config = require("config")
+local window = require("gameWindow")
 
 -- upload all game assets into memory/runtime
 function love.load()
@@ -16,3 +17,7 @@ function love.load()
 	print("jit: ", jit and jit.version or "no jit")
 end
 
+-- draw assets to the screen
+function love.draw()
+	
+end

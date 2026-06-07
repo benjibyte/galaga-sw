@@ -20,7 +20,7 @@ end
 
 -- Create Game Frames
 function love.draw()
-	love.graphics.scale(WindowScale, WindowScale)
+
 
 	-- Draw Scrolling Background
 	love.graphics.draw(BackgroundSprite, 0, ScrollY - (WindowH / WindowScale))
